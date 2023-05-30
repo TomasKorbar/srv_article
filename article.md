@@ -1,4 +1,4 @@
-# Using Postfixs SRV DNS Record resolution feature
+# Using Postfix's DNS SRV record resolution feature
 
 In March 2011 Apple Inc. proposed [RFC6186](https://www.ietf.org/rfc/rfc6186.txt) describing how SRV records should be used
 for locating email submission and access services. Postfix since version 3.8.0 now supports it. This means that it is now possible to
@@ -7,8 +7,7 @@ use DNS SRV records for load distribution or auto-configuration.
 ## How does DNS SRV record look like
 
 DNS SRV records were defined in [RFC2782](https://www.ietf.org/rfc/rfc2782.txt) and are specified in zone files as the services name, transport protocol
-specification, priority, weight, port and host that is providing this
-service.
+specification, priority, weight, port and host that is providing the service.
 
 `_submission._tcp    SRV 5 10 50 bruce.my-domain.com.`
 
@@ -23,7 +22,11 @@ service.
 
 ## Server selection algorithm
 
-Clients that are implementing the resolution of SRV records should do it accordingly to how the resolution is described in [RFC2782](https://www.ietf.org/rfc/rfc2782.txt). That means, first contact the server with the lowest priority. If the server does not respond then try to contact the next server with either the same or higher priority. If there are multiple servers with the same priority then choose one randomly, but ensure that the records with zero priority get chosen first and the probability of choosing other records conforms to the equation $p_i = \frac{weight_i}{\sum_{n=1}^k weight_n}$ where $i$ is the identification of SRV record and $k$ is the
+Clients that are implementing the resolution of SRV records should do it accordingly to how the resolution is described in [RFC2782](https://www.ietf.org/rfc/rfc2782.txt). That means, first contact the server with the lowest priority. If the server does not respond then try to contact the next server with either the same or higher priority. If there are multiple servers with the same priority then choose one randomly, but ensure that the records with zero priority get chosen first and the probability of choosing other records conforms to the equation
+
+$p_i = \frac{weight_i}{\sum_{n=1}^k weight_n}$
+
+where $i$ is the identification of SRV record and $k$ is the
 count of SRV records with the same priority.
 
 There is one case where postfixs selection of SRV records differs from the algorithm described in [RFC2782](https://www.ietf.org/rfc/rfc2782.txt) and that is when zero weight is encountered. [RFC2782](https://www.ietf.org/rfc/rfc2782.txt) states that such
