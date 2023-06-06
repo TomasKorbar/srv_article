@@ -62,7 +62,8 @@ and only after that, any secondary servers would be contacted. Additionally, if 
 have no way of telling the clients what port is the particular server using. With SRV records we can prevent that and keep the servers running smoothly without peaks while changing the server's port as we see fit.
 
 ### Zone file
-The following file is how we would configure our DNS server to provide information to clients. Notice that this domain does not receive mail and our servers will work only as a relay for outgoing post.
+The following file is how we would configure our DNS server to provide information to clients. Servers one, two and three are just relays that we will use for explanation and
+server four will receive testing mail.
 
 ```
 $TTL  3600
@@ -73,14 +74,18 @@ $TTL  3600
                 1209600    ; Expiry time
                 10800 )    ; Maximum caching time in case of failed lookups
 ;
-   	IN NS   ns1.first-domain.com.
-   	IN A    192.168.2.8
+   	IN NS   ns1.example-domain.com.
+   	IN A    192.168.2.0
 ;
-ns1	IN A    192.168.2.10
-server-one           IN A   192.168.2.10
-server-two           IN A   192.168.2.11
-_submission._tcp     SRV 0 75 2525 server-one.example-domain.com.
-_submission._tcp     SRV 0 25 2625 server-two.example-domain.com.
+ns1	IN A    192.168.2.2
+server-one           IN A   192.168.2.4
+server-two           IN A   192.168.2.5
+server-three         IN A   192.168.2.6
+server-four          IN A   192.168.2.7
+_submission._tcp     SRV 0 0 2525  server-one.example-domain.com.
+_submission._tcp     SRV 1 50 2625 server-two.example-domain.com.
+_submission._tcp     SRV 1 50 2625 server-three.example-domain.com.
+@ MX 0 server-four.example-domain.com.
 ```
 
 ### Postfix MUA configuration
@@ -91,15 +96,47 @@ will look for SRV records:
 ```
 use_srv_lookup = submission
 relayhost = example-domain.com:submission
-smtp_tls_security_level = may
 ```
 
 This configuration causes postfixes on our client machines to contact DNS server
-for example-domain and request its SRV records for submission of mail. Then Postfix
-will choose one out of the two records and try to submit mail to it. As per configuration, server-one will be contacted first in roughly 75% of the total cases and server-two in roughly 25%. Please note the weight value does not equal the percentage, the same effect could be achieved with respective values 3 and 1.
+for example-domain and request its SRV records for submission of mail. Server one has
+the highest priority and thus will be tried first. Then Postfix
+will choose one out of the two remaining records and try them. As per configuration, server one will be contacted first in roughly 50% of the total cases as server two. Please note the weight value does not equal the percentage, the same effect could be achieved with respective values 1 and 1.
 
 Postfix will also know that server-one listens on port 2525 and server-two on port 2625. If you use a way of caching retrieved DNS records and you change the SRV records dynamically, you will have to discard the cache and force retrieval of new records.
 
 ### Complete setup
 
 ![alt text](srv_article.png)
+
+You can try this configuration with podman and included compose file.
+
+```
+$ git clone https://github.com/TomasKorbar/srv_article
+$ cd environment
+$ podman-compose up
+$ podman exec -it article_client /bin/bash
+[root@client /]# ./senddummy.sh
+[root@client /]# exit
+```
+
+After these steps, you can see in logs, that the mail passes server one and is delivered
+to server four.
+
+```
+$ podman stop article_server1
+$ podman exec -it article_client /bin/bash
+[root@client /]# ./senddummy.sh
+[root@client /]# ./senddummy.sh
+[root@client /]# ./senddummy.sh
+[root@client /]# ./senddummy.sh
+[root@client /]# ./senddummy.sh
+[root@client /]# ./senddummy.sh
+[root@client /]# exit
+```
+
+Now that the first server is down, these six mails will be relayed by either server two or three.
+
+You can take a closer look at the Dockerfiles to understand the configuration more deeply.
+
+Finish working with the example by executing `$ podman-compose down`.
