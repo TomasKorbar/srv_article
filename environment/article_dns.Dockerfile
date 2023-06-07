@@ -39,6 +39,4 @@ RUN sed -i "s/127.0.0.1/any/" /etc/named.conf
 RUN sed -i "s/recursion yes/recursion no/" /etc/named.conf
 RUN sed -i "s/allow-query.*//" /etc/named.conf
 
-EXPOSE 53
-
 CMD named -u named -g -f

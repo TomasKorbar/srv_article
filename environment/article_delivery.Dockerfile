@@ -10,6 +10,4 @@ RUN /usr/libexec/postfix/aliasesdb
 
 RUN useradd dummy
 
-EXPOSE 25
-
 CMD postfix start-fg

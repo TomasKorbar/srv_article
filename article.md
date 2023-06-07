@@ -21,7 +21,7 @@ specification, priority, weight, port and host which provides the service.
 
 ## Server selection algorithm
 
-Clients that implement the resolution of SRV records should do it according to how the resolution is described in [RFC 2782](https://www.ietf.org/rfc/rfc2782.txt). That means, first contact the server with the lowest priority. If the server does not respond, try to contact the next server with either the same or higher priority. If there are multiple servers with the same priority, choose one randomly, but ensure the records with zero priority get chosen first and the probability of choosing other records conforms to the equation:
+Clients that implement the resolution of SRV records should do it according to how the resolution is described in [RFC 2782](https://www.ietf.org/rfc/rfc2782.txt). That means, first contact the server with the lowest priority. If the server does not respond, try to contact the next server with either the same or lower priority. If there are multiple servers with the same priority, choose one randomly, but ensure the records with zero weight get chosen first and the probability of choosing other records conforms to the equation:
 
 $p_i = \frac{weight_i}{\sum_{n=1}^k weight_n}$
 
@@ -30,7 +30,7 @@ count of SRV records with the same priority.
 
 There is one case where postfix selection of SRV records differs from the algorithm described in [RFC 2782](https://www.ietf.org/rfc/rfc2782.txt) and that is when zero weight is encountered. [RFC 2782](https://www.ietf.org/rfc/rfc2782.txt) states that such
 records should be picked first, but Postfix handles them simply as records with
-the lowest weights, e.g. they will be the least often selected ones.
+the lowest weights, which means they will be the least often selected ones.
 
 In practice, this means that if you have two servers and one is
 3 times as powerful as the other one, then you should give the first weight of value 3 times higher than the other one. This ensures the more powerful server will receive ~75% of client requests and the other one ~25%.
