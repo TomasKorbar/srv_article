@@ -21,16 +21,12 @@ specification, priority, weight, port and host which provides the service.
 
 ## Server selection algorithm
 
-Clients that implement the resolution of SRV records should do it according to how the resolution is described in [RFC 2782](https://www.ietf.org/rfc/rfc2782.txt). That means, first contact the server with the lowest priority. If the server does not respond, try to contact the next server with either the same or lower priority. If there are multiple servers with the same priority, choose one randomly, but ensure the records with zero weight get chosen first and the probability of choosing other records conforms to the equation:
+Clients that implement the resolution of SRV records should do it according to how the resolution is described in [RFC 2782](https://www.ietf.org/rfc/rfc2782.txt). That means, first contact the server with the lowest priority. If the server does not respond, try to contact the next server with either the same or lower priority. If there are multiple servers with the same priority, choose one randomly, but ensure the probability of choosing records conforms to the equation:
 
 $p_i = \frac{weight_i}{\sum_{n=1}^k weight_n}$
 
 where $i$ is the identification of SRV record and $k$ is the
 count of SRV records with the same priority.
-
-There is one case where postfix selection of SRV records differs from the algorithm described in [RFC 2782](https://www.ietf.org/rfc/rfc2782.txt) and that is when zero weight is encountered. [RFC 2782](https://www.ietf.org/rfc/rfc2782.txt) states that such
-records should be picked first, but Postfix handles them simply as records with
-the lowest weights, which means they will be the least often selected ones.
 
 In practice, this means that if you have two servers and one is
 3 times as powerful as the other one, then you should give the first weight of value 3 times higher than the other one. This ensures the more powerful server will receive ~75% of client requests and the other one ~25%.
@@ -41,9 +37,9 @@ clients and distribute the workload among servers.
 An example of such a set of records would be:
 
 ```
-_submission._tcp 	SRV 0 0 2525 server-one.example-domain.com.
-_submission._tcp 	SRV 1 75 2625 server-two.example-domain.com.
-_submission._tcp 	SRV 1 25 2625 server-three.example-domain.com.
+_submission._tcp 	SRV 0 0 2525 server-one
+_submission._tcp 	SRV 1 75 2625 server-two
+_submission._tcp 	SRV 1 25 2625 server-three
 ```
 
 Server-one would always be contacted first. If server-one does not respond, the client will shuffle the two remaining records with priority 1, generate a random number from 0 to 100 and if the running sum of the first record is
@@ -74,7 +70,7 @@ $TTL  3600
                 1209600    ; Expiry time
                 10800 )    ; Maximum caching time in case of failed lookups
 ;
-   	IN NS   ns1.example-domain.com.
+   	IN NS   ns1
    	IN A    192.168.2.0
 ;
 ns1	IN A    192.168.2.2
@@ -82,10 +78,10 @@ server-one           IN A   192.168.2.4
 server-two           IN A   192.168.2.5
 server-three         IN A   192.168.2.6
 server-four          IN A   192.168.2.7
-_submission._tcp     SRV 0 0 2525  server-one.example-domain.com.
-_submission._tcp     SRV 1 50 2625 server-two.example-domain.com.
-_submission._tcp     SRV 1 50 2625 server-three.example-domain.com.
-@ MX 0 server-four.example-domain.com.
+_submission._tcp     SRV 0 0 2525  server-one
+_submission._tcp     SRV 1 50 2625 server-two
+_submission._tcp     SRV 1 50 2625 server-three
+@ MX 0 server-four
 ```
 
 ### Postfix MUA configuration
@@ -103,7 +99,7 @@ for example-domain and request its SRV records for submission of mail. Server on
 the highest priority and thus will be tried first. Then Postfix
 will choose one out of the two remaining records and try them. As per configuration, server one will be contacted first in roughly 50% of the total cases as server two. Please note the weight value does not equal the percentage, the same effect could be achieved with respective values 1 and 1.
 
-Postfix will also know that server-one listens on port 2525 and server-two on port 2625. If you use a way of caching retrieved DNS records and you change the SRV records dynamically, you will have to discard the cache and force retrieval of new records.
+Postfix will also know that server-one listens on port 2525 and server-two on port 2625. If you use a way of caching retrieved DNS records and you change the SRV records dynamically, you will have to set TTL of your records to low value.
 
 ### Complete setup
 

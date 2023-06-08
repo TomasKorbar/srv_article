@@ -10,7 +10,7 @@ RUN echo -e '$TTL  3600\n\
                 1209600    ; Expiry time\n\
                 10800 )    ; Maximum caching time in case of failed lookups\n\
 ;\n\
-   	IN NS   ns1.example-domain.com.\n\
+   	IN NS   ns1\n\
    	IN A    192.168.2.0\n\
 ;\n\
 ns1	IN A    192.168.2.2\n\
@@ -18,10 +18,10 @@ server-one           IN A   192.168.2.4\n\
 server-two           IN A   192.168.2.5\n\
 server-three         IN A   192.168.2.6\n\
 server-four          IN A   192.168.2.7\n\
-_submission._tcp     SRV 0 0 2525  server-one.example-domain.com.\n\
-_submission._tcp     SRV 1 50 2625 server-two.example-domain.com.\n\
-_submission._tcp     SRV 1 50 2625 server-three.example-domain.com.\n\
-@ MX 0 server-four.example-domain.com.\n\
+_submission._tcp     SRV 0 0 2525  server-one\n\
+_submission._tcp     SRV 1 50 2625 server-two\n\
+_submission._tcp     SRV 1 50 2625 server-three\n\
+@ MX 0 server-four\n\
 ' > /etc/named/example-domain.conf.zone
 
 RUN echo -e '\
