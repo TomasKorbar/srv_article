@@ -21,7 +21,7 @@ The DNS SRV records were defined in [RFC 2782](https://www.ietf.org/rfc/rfc2782.
 
 Clients should implement the resolution of SRV records as described in [RFC 2782](https://www.ietf.org/rfc/rfc2782.txt). That means, first contact the server with the lowest priority. If the server does not respond, try to contact the next server with either the same or lower priority. If there are multiple servers with the same priority, choose one randomly, but ensure the probability of choosing records conforms to the equation:
 
-$p_i = \frac{weight_i}{\sum_{n=1}^k weight_n}$
+![probability equation](probability_equation.png)
 
 where $i$ is the identification of SRV record and $k$ is the
 count of SRV records with the same priority.
@@ -85,7 +85,7 @@ Postfix also has the information that server-one listens on port 2525 and server
 
 ### Complete setup
 
-![alt text](srv_article.png)
+![network plan](srv_article.png)
 
 You can try this configuration with podman and included compose file.
 
